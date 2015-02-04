@@ -77,6 +77,11 @@ public final class PropertiesBasedTraceeFilterConfiguration implements TraceeFil
 		return filtered;
 	}
 
+	@Override
+	public boolean getBoolean(String key) {
+		return "true".equals(getProfiledOrDefaultProperty(key));
+	}
+
 	private int parseIntOrZero(String intString) {
 		try {
 			return Integer.parseInt(intString);

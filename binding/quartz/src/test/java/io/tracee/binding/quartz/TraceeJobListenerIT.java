@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -41,10 +42,6 @@ public class TraceeJobListenerIT {
 		scheduler.start();
 	}
 
-	@After
-	public void after() throws SchedulerException {
-		scheduler.shutdown();
-	}
 
 	@Test
 	public void shouldRunJobWithRequestId() throws SchedulerException, InterruptedException {
@@ -62,8 +59,18 @@ public class TraceeJobListenerIT {
 		final JobDetail jobDetail = JobBuilder.newJob(TestJob.class).build();
 		final Trigger trigger = TriggerBuilder.newTrigger().forJob(jobDetail).startNow().build();
 		scheduler.scheduleJob(jobDetail, trigger);
-		Thread.sleep(500L);
+		scheduler.shutdown(true);
 		verify(backend).put(eq(TraceeConstants.REQUEST_ID_KEY), anyString());
+		verify(backend).clear();
+	}
+
+	@Test
+	public void shouldPropagateJobKeyIfConfigured() throws SchedulerException, InterruptedException {
+		final JobDetail jobDetail = JobBuilder.newJob(TestJob.class).withIdentity("foojob","groupy").build();
+		final Trigger trigger = TriggerBuilder.newTrigger().forJob(jobDetail).startNow().build();
+		scheduler.scheduleJob(jobDetail, trigger);
+		scheduler.shutdown(true);
+		verify(backend).put(eq(TraceeJobListener.JOB_KEY), eq("groupy-foojob"));
 		verify(backend).clear();
 	}
 

@@ -42,4 +42,6 @@ public class PermitAllTraceeFilterConfiguration implements TraceeFilterConfigura
 	public final int generatedSessionIdLength() {
 		return ARBITRARY_NUMBER;
 	}
+	@Override
+	public boolean getBoolean(String key) { return true; }
 }

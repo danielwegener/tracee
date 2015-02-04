@@ -47,5 +47,10 @@ public interface TraceeFilterConfiguration {
 	 */
 	int generatedSessionIdLength();
 
+	/**
+	 * @param key a well known configuration key.
+	 * @return {@code true} when the resolved property for the given key equals "true", {@code false} otherwise.
+	 */
+	boolean getBoolean(String key);
 
 }
