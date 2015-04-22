@@ -31,11 +31,12 @@ public class TraceeMessagePropertiesConverterTest {
 
 	private final TraceeMessagePropertiesConverter unit = new TraceeMessagePropertiesConverter(backend, USED_PROFILE);
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void shouldAddTraceeContexttoMessageHeaders() throws Exception {
 		backend.put("inClientBeforeRequest", "true");
 
-		MessageProperties messageProperties = new MessageProperties();
+		final MessageProperties messageProperties = new MessageProperties();
 		final AMQP.BasicProperties basicProperties = unit.fromMessageProperties(messageProperties, CHARSET_UTF8);
 
 		assertThat(basicProperties.getHeaders(), hasKey(TPIC_HEADER));

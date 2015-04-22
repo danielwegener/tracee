@@ -12,7 +12,6 @@ import org.quartz.listeners.JobListenerSupport;
 
 import java.util.Map;
 
-import static io.tracee.configuration.TraceeFilterConfiguration.Channel.AsyncDispatch;
 import static io.tracee.configuration.TraceeFilterConfiguration.Channel.AsyncProcess;
 
 public class TraceeJobListener extends JobListenerSupport {
@@ -44,6 +43,7 @@ public class TraceeJobListener extends JobListenerSupport {
 		final TraceeFilterConfiguration configuration = backend.getConfiguration(profile);
 
 		if (configuration.shouldProcessContext(AsyncProcess)) {
+			// FIXME: how to deal with this unsafe cast?
 			final Map<String, String> traceeContext = (Map<String, String>) context.getMergedJobDataMap().get(TraceeConstants.TPIC_HEADER);
 
 			if (traceeContext != null && !traceeContext.isEmpty()) {

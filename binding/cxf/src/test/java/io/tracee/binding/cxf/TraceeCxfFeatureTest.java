@@ -11,7 +11,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.List;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TraceeCxfFeatureTest {
@@ -24,6 +27,7 @@ public class TraceeCxfFeatureTest {
 
 	private final SimpleTraceeBackend backend = SimpleTraceeBackend.createNonLoggingAllPermittingBackend();
 
+	@SuppressWarnings("unchecked")
 	@Before
 	public void onSetup() throws Exception {
 		when(interceptorProvider.getInInterceptors()).thenReturn(mock(List.class));

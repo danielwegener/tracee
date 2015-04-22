@@ -35,6 +35,7 @@ public class TraceeTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test(expected = TraceeException.class)
 	public void backendRetrievalShouldWrapRuntimeExceptionIfItOccurs() {
 		try {

@@ -120,36 +120,43 @@ public class TraceeHttpClientDecorator extends HttpClient {
 		delegate.setState(state);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public synchronized void setStrictMode(boolean strictMode) {
 		delegate.setStrictMode(strictMode);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public synchronized boolean isStrictMode() {
 		return delegate.isStrictMode();
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public synchronized void setTimeout(int newTimeoutInMilliseconds) {
 		delegate.setTimeout(newTimeoutInMilliseconds);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public synchronized void setHttpConnectionFactoryTimeout(long timeout) {
 		delegate.setHttpConnectionFactoryTimeout(timeout);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public synchronized void setConnectionTimeout(int newTimeoutInMilliseconds) {
 		delegate.setConnectionTimeout(newTimeoutInMilliseconds);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public String getHost() {
 		return delegate.getHost();
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public int getPort() {
 		return delegate.getPort();

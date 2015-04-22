@@ -9,6 +9,7 @@ import io.tracee.configuration.TraceeFilterConfiguration;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.support.DefaultMessagePropertiesConverter;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +45,7 @@ public class TraceeMessagePropertiesConverter extends DefaultMessagePropertiesCo
 		final TraceeFilterConfiguration filterConfiguration = backend.getConfiguration(profile);
 		if (filterConfiguration.shouldProcessContext(AsyncProcess)) {
 			// Values are stored as type of LongStringHelper.ByteArrayLongString - but it's private
+			// FIXME: how to deal with this unsafe cast?
 			final Map<String, String> traceeContextMap = transformToTraceeContextMap(
 					(Map<String, ?>) messageProperties.getHeaders().get(TPIC_HEADER));
 			if (traceeContextMap != null && !traceeContextMap.isEmpty()) {
