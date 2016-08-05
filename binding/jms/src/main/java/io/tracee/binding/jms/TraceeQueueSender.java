@@ -7,6 +7,10 @@ import javax.jms.Message;
 import javax.jms.Queue;
 import javax.jms.QueueSender;
 
+/**
+ * @deprecated use {@link TraceeConnectionFactoryAdapter} instead.
+ */
+@Deprecated
 public final class TraceeQueueSender implements QueueSender {
 
 

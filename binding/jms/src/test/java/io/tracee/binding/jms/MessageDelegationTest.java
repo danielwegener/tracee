@@ -11,12 +11,14 @@ import static org.mockito.Mockito.mock;
 
 public class MessageDelegationTest {
 
+	@Deprecated
 	@Test
 	public void delegateTraceeMessageProducerToMessageProducer() {
 		final MessageProducer messageProducer = mock(MessageProducer.class);
 		DelegationTestUtil.assertDelegationToSpy(messageProducer).by(new TraceeMessageProducer(messageProducer)).verify();
 	}
 
+	@Deprecated
 	@Test
 	public void delegateTraceeMessageProducerToMessageQueueSender() {
 		final QueueSender queueSender = mock(QueueSender.class);
@@ -24,6 +26,7 @@ public class MessageDelegationTest {
 		DelegationTestUtil.assertDelegationToSpy(queueSender).by(new TraceeQueueSender(traceeMessageProducer, queueSender)).verify();
 	}
 
+	@Deprecated
 	@Test
 	public void delegateTraceeTopicPublisherToTopicPublisher() {
 		final TopicPublisher topicPublisher = mock(TopicPublisher.class);

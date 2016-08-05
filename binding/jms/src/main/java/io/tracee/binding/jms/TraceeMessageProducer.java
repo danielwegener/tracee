@@ -12,6 +12,10 @@ import java.util.Map;
 
 import static io.tracee.configuration.TraceeFilterConfiguration.Channel.AsyncDispatch;
 
+/**
+ * @deprecated use {@link TraceeConnectionFactoryAdapter} instead.
+ */
+@Deprecated
 public class TraceeMessageProducer implements MessageProducer {
 
 

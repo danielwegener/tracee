@@ -4,6 +4,10 @@ import javax.jms.MessageProducer;
 import javax.jms.QueueSender;
 import javax.jms.TopicPublisher;
 
+/**
+ * @deprecated use {@link TraceeConnectionFactoryAdapter} instead.
+ */
+@Deprecated
 public final class TraceeMessageWriter {
 
 	private TraceeMessageWriter() {

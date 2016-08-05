@@ -48,9 +48,7 @@ class Slf4jTraceeBackend extends BackendBase {
 		if (key == null) throw new IllegalArgumentException("null keys are not allowed.");
 		if (value == null) throw new IllegalArgumentException("null values are not allowed.");
 		final Set<String> registeredKeys = traceeKeys.get();
-		if (!registeredKeys.contains(key)) {
-			registeredKeys.add(key);
-		}
+		registeredKeys.add(key);
 		MDC.put(key, value);
 	}
 

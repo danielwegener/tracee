@@ -6,6 +6,10 @@ import javax.jms.Message;
 import javax.jms.Topic;
 import javax.jms.TopicPublisher;
 
+/**
+ * @deprecated use {@link TraceeConnectionFactoryAdapter} instead.
+ */
+@Deprecated
 public final class TraceeTopicPublisher implements TopicPublisher {
 
 
