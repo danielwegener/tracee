@@ -2,7 +2,6 @@ package io.tracee.binding.springmvc;
 
 import io.tracee.Tracee;
 import io.tracee.TraceeBackend;
-import io.tracee.TraceeConstants;
 import io.tracee.Utilities;
 import io.tracee.configuration.TraceeFilterConfiguration;
 import io.tracee.transport.HttpHeaderTransport;
@@ -12,8 +11,11 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 
 import static io.tracee.configuration.TraceeFilterConfiguration.Channel.IncomingRequest;
@@ -24,8 +26,6 @@ public final class TraceeInterceptor implements HandlerInterceptor {
 
 	private final TraceeBackend backend;
 	private final HttpHeaderTransport httpHeaderSerialization;
-	private String outgoingHeaderName = TraceeConstants.TPIC_HEADER;
-	private String incomingHeaderName = TraceeConstants.TPIC_HEADER;
 	private String profileName;
 
 	public TraceeInterceptor() {
@@ -43,12 +43,17 @@ public final class TraceeInterceptor implements HandlerInterceptor {
 		final TraceeFilterConfiguration configuration = backend.getConfiguration(profileName);
 
 		if (configuration.shouldProcessContext(IncomingRequest)) {
-			@SuppressWarnings("unchecked")
-			final Enumeration<String> headers = request.getHeaders(incomingHeaderName);
-			if (headers != null && headers.hasMoreElements()) {
-				final Map<String, String> parsedContext = httpHeaderSerialization.parse(Collections.list(headers));
-				backend.putAll(configuration.filterDeniedParams(parsedContext, IncomingResponse));
+
+			final Enumeration<String> headerNames = (request.getHeaderNames() != null) ? request.getHeaderNames() : Collections.<String>emptyEnumeration();
+			final List<Map.Entry<String,String>> headerEntries = new ArrayList<>();
+			for (String headerName : Collections.list(headerNames)) {
+				for (String headerValue : Collections.list(request.getHeaders(headerName))) {
+					headerEntries.add(new AbstractMap.SimpleImmutableEntry<>(headerName, headerValue));
+				}
 			}
+
+			final Map<String, String> parsedContext = httpHeaderSerialization.parse(headerEntries);
+			backend.putAll(configuration.filterDeniedParams(parsedContext, IncomingResponse));
 		}
 
 		Utilities.generateInvocationIdIfNecessary(backend);
@@ -85,17 +90,12 @@ public final class TraceeInterceptor implements HandlerInterceptor {
 
 			if (configuration.shouldProcessContext(OutgoingResponse)) {
 				final Map<String, String> filteredContext = configuration.filterDeniedParams(backend.copyToMap(), OutgoingResponse);
-				response.setHeader(outgoingHeaderName, httpHeaderSerialization.render(filteredContext));
+
+				for (Map.Entry<String, String> header : httpHeaderSerialization.render(filteredContext)) {
+					response.setHeader(header.getKey(), header.getValue());
+				}
 			}
 		}
-	}
-
-	public void setOutgoingHeaderName(String outgoingHeaderName) {
-		this.outgoingHeaderName = outgoingHeaderName;
-	}
-
-	public void setIncomingHeaderName(String incomingHeaderName) {
-		this.incomingHeaderName = incomingHeaderName;
 	}
 
 	public String getProfileName() {

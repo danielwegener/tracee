@@ -4,10 +4,9 @@ import io.tracee.Tracee;
 import io.tracee.TraceeBackend;
 import io.tracee.TraceeConstants;
 import io.tracee.configuration.TraceeFilterConfiguration;
-import io.tracee.testhelper.EmptyEnumeration;
 import io.tracee.testhelper.FieldAccessUtil;
 import io.tracee.testhelper.PermitAllTraceeFilterConfiguration;
-import io.tracee.transport.HttpHeaderTransport;
+import io.tracee.testhelper.SingletonEnumeration;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +20,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
 
 import static io.tracee.TraceeConstants.INVOCATION_ID_KEY;
 import static java.util.Collections.singletonList;
@@ -54,6 +52,7 @@ public class TraceeInterceptorTest {
 
 	@Test
 	public void shouldSetInvocationIdToBackend() throws Exception {
+		when(httpServletRequest.getHeaderNames()).thenReturn(EmptyEnumeration.<String>emptyEnumeration());
 		unit.preHandle(httpServletRequest, httpServletResponse, new Object());
 		verify(mockedBackend).put(eq(INVOCATION_ID_KEY), anyString());
 	}
@@ -69,6 +68,7 @@ public class TraceeInterceptorTest {
 	@Test
 	public void shouldNotOverrideExistingInvocationId() throws Exception {
 		when(mockedBackend.containsKey(eq(INVOCATION_ID_KEY))).thenReturn(true);
+		when(httpServletRequest.getHeaderNames()).thenReturn(EmptyEnumeration.<String>emptyEnumeration());
 		unit.preHandle(httpServletRequest, httpServletResponse, new Object());
 		verify(mockedBackend, never()).put(eq(INVOCATION_ID_KEY), anyString());
 	}
@@ -108,6 +108,7 @@ public class TraceeInterceptorTest {
 		parsedInitValues.put(INVOCATION_ID_KEY, "myGreatId321");
 		when(mockedBackend.copyToMap()).thenReturn(parsedInitValues);
 		when(httpServletResponse.isCommitted()).thenReturn(false);
+		when(httpServletRequest.getHeaderNames()).thenReturn(Collections.<String>emptyEnumeration());
 
 		unit.preHandle(httpServletRequest, httpServletResponse, new Object());
 
@@ -136,14 +137,6 @@ public class TraceeInterceptorTest {
 	}
 
 	@Test
-	public void shouldUseCustomHeaderInResponse() throws Exception {
-		final String testHeader = "testHeader";
-		unit.setOutgoingHeaderName(testHeader);
-		unit.afterCompletion(httpServletRequest, httpServletResponse, new Object(), null);
-		verify(httpServletResponse).setHeader(eq(testHeader), anyString());
-	}
-
-	@Test
 	public void shouldUseConfiguredProfile() throws Exception {
 		unit.setProfileName("FOO");
 		unit.afterCompletion(httpServletRequest, httpServletResponse, new Object(), null);
@@ -155,8 +148,8 @@ public class TraceeInterceptorTest {
 	public void shouldMergeIncomingContextIfConfigured() throws Exception {
 		final Map<String, String> expected = new HashMap<>();
 		expected.put("testkey", "testValue123");
-		final Enumeration<String> header = createHeader("testkey", "testValue123");
-		when(httpServletRequest.getHeaders(TraceeConstants.TPIC_HEADER)).thenReturn(header);
+		when(httpServletRequest.getHeaderNames()).thenReturn(SingletonEnumeration.of(TraceeConstants.TPIC_HEADER));
+		when(httpServletRequest.getHeaders(TraceeConstants.TPIC_HEADER)).thenReturn(SingletonEnumeration.of("testkey=testValue123"));
 		unit.preHandle(httpServletRequest, httpServletResponse, new Object());
 		verify(mockedBackend).putAll(eq(expected));
 	}
@@ -164,7 +157,6 @@ public class TraceeInterceptorTest {
 	@Test
 	public void shouldMergeIncomingContextFromCustomHeader() throws Exception {
 		final String incomingHeader = "myHeader";
-		unit.setIncomingHeaderName(incomingHeader);
 
 		final Map<String, String> expected = new HashMap<>();
 		expected.put("testkey", "testValue123");
@@ -185,13 +177,6 @@ public class TraceeInterceptorTest {
 	public void defaultConstructorUsesTraceeBackend() {
 		final TraceeInterceptor interceptor = new TraceeInterceptor();
 		MatcherAssert.assertThat((TraceeBackend) FieldAccessUtil.getFieldVal(interceptor, "backend"), is(Tracee.getBackend()));
-	}
-
-	private Enumeration<String> createHeader(String key, String value) {
-		final Map<String, String> map = new HashMap<>();
-		map.put(key, value);
-		final String httpHeaderValue = new HttpHeaderTransport().render(map);
-		return new Vector<>(Collections.singletonList(httpHeaderValue)).elements();
 	}
 
 	private TraceeBackend mockedBackend(TraceeFilterConfiguration filterConfiguration) {

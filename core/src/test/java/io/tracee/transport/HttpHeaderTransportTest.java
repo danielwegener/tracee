@@ -1,13 +1,13 @@
 package io.tracee.transport;
 
-import io.tracee.TraceeBackend;
-import io.tracee.testhelper.SimpleTraceeBackend;
+import io.tracee.TraceeConstants;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.anyOf;
@@ -20,15 +20,25 @@ import static org.junit.Assert.assertThat;
 
 public class HttpHeaderTransportTest {
 
-	final TraceeBackend backend = SimpleTraceeBackend.createNonLoggingAllPermittingBackend();
-	final HttpHeaderTransport UNIT = new HttpHeaderTransport();
+	private final HttpHeaderTransport UNIT = new HttpHeaderTransport();
+
+	@Test
+	public void renderToASingleHeaderWithIsTraceeConstants() {
+		final Map<String, String> context = new HashMap<>();
+		context.put("key1", "value1");
+		final Iterable<Map.Entry<String, String>> result = UNIT.render(context);
+		assertThat(result, Matchers.<Map.Entry<String,String>>iterableWithSize(1));
+		assertThat(result.iterator().next().getKey(), is(TraceeConstants.TPIC_HEADER));
+	}
 
 	@Test
 	public void renderKeyValueWithEqualSignAndConcatWithComma() {
 		final Map<String, String> context = new HashMap<>();
 		context.put("key1", "value1");
 		context.put("key2", "value2");
-		assertThat(UNIT.render(context), anyOf(is("key1=value1,key2=value2"), is("key2=value2,key1=value1")));
+		assertThat(UNIT.render(context).iterator().next().getValue(), anyOf(
+			is("key1=value1,key2=value2"),
+			is("key2=value2,key1=value1")));
 	}
 
 	@Test
@@ -37,12 +47,14 @@ public class HttpHeaderTransportTest {
 		context.put(" key1 ", " value1 ");
 		context.put(" key2 ", " value2 ");
 		System.out.println(UNIT.render(context));
-		assertThat(UNIT.render(context), anyOf(is("key1=value1,key2=value2"), is("key2=value2,key1=value1")));
+		assertThat(UNIT.render(context).iterator().next().getValue(), anyOf(
+			is("key1=value1,key2=value2"),
+			is("key2=value2,key1=value1")));
 	}
 
 	@Test
 	public void renderEmptyMapResultsIntoEmptyString() {
-		assertThat(UNIT.render(Collections.<String, String>emptyMap()), is(""));
+		assertThat(UNIT.render(Collections.<String, String>emptyMap()), Matchers.<Map.Entry<String,String>>emptyIterable());
 	}
 
 	@Test
@@ -50,8 +62,8 @@ public class HttpHeaderTransportTest {
 		final Map<String, String> context = new HashMap<>();
 		context.put("!\"§$%&@/( )=?", "^°+*'#-.,;:_<> ´´``");
 		context.put("ö üäß", "Ö ÜÄß€");
-		final String headerString = UNIT.render(context);
-		assertThat(headerString, not(anyOf(containsString("\""), containsString("\\"))));
+		final Iterable<Map.Entry<String, String>> headers = UNIT.render(context);
+		assertThat(headers.iterator().next().getValue(), not(anyOf(containsString("\""), containsString("\\"))));
 	}
 
 	@Test
@@ -59,7 +71,7 @@ public class HttpHeaderTransportTest {
 		final Map<String, String> context = new HashMap<>();
 		context.put("!\"§$%&@/()=? ", "^°+*'# .,;:_<>´´``");
 		context.put("öü äß", "ÖÜ Äß€");
-		final String headerString = UNIT.render(context);
+		final String headerString = UNIT.render(context).iterator().next().getValue();
 		assertThat(headerString, not(anyOf(containsString("("), containsString(")"))));
 		assertThat(headerString, not(anyOf(containsString("<"), containsString(">"))));
 		assertThat(headerString, not(anyOf(containsString("{"), containsString("}"))));
@@ -75,7 +87,7 @@ public class HttpHeaderTransportTest {
 		final Map<String, String> context = new HashMap<>();
 		context.put("!\"§$%&@/()=? ", "^°+*'# .,;:_<>´´``");
 		context.put("öü äß", "ÖÜ Äß€");
-		final String headerString = UNIT.render(context);
+		final String headerString = UNIT.render(context).iterator().next().getValue();
 		assertThat(countChars(headerString, '='), is(2)); // two pairs
 		assertThat(countChars(headerString, ','), is(1)); // one concatenation
 	}
@@ -136,7 +148,9 @@ public class HttpHeaderTransportTest {
 
 	@Test
 	public void shouldParseTwoHeadersAndMergeThem() {
-		final List<String> headers = Arrays.asList("key1=value1,key2=value2", "key3=value3");
+		final Iterable<Map.Entry<String, String>> headers = Arrays.asList(
+			(Map.Entry<String,String>) new AbstractMap.SimpleImmutableEntry<>(TraceeConstants.TPIC_HEADER, "key1=value1,key2=value2"),
+			new AbstractMap.SimpleImmutableEntry<>(TraceeConstants.TPIC_HEADER, "key3=value3"));
 		final Map<String, String> context = UNIT.parse(headers);
 		assertThat(context, hasEntry("key1", "value1"));
 		assertThat(context, hasEntry("key2", "value2"));

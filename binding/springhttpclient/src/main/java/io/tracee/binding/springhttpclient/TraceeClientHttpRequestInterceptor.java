@@ -2,7 +2,6 @@ package io.tracee.binding.springhttpclient;
 
 import io.tracee.Tracee;
 import io.tracee.TraceeBackend;
-import io.tracee.TraceeConstants;
 import io.tracee.configuration.TraceeFilterConfiguration;
 import io.tracee.configuration.TraceeFilterConfiguration.Profile;
 import io.tracee.transport.HttpHeaderTransport;
@@ -12,6 +11,8 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 
 import java.io.IOException;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -50,15 +51,23 @@ public final class TraceeClientHttpRequestInterceptor implements ClientHttpReque
 		final TraceeFilterConfiguration filterConfiguration = backend.getConfiguration(profile);
 		if (!backend.isEmpty() && filterConfiguration.shouldProcessContext(OutgoingRequest)) {
 			final Map<String, String> filteredParams = filterConfiguration.filterDeniedParams(backend.copyToMap(), OutgoingRequest);
-			request.getHeaders().add(TraceeConstants.TPIC_HEADER, transportSerialization.render(filteredParams));
+			for (Map.Entry<String, String> headerEntry : transportSerialization.render(filteredParams)) {
+				request.getHeaders().add(headerEntry.getKey(), headerEntry.getValue());
+			}
 		}
 	}
 
 	private void postResponse(ClientHttpResponse response) {
-		final List<String> headers = response.getHeaders().get(TraceeConstants.TPIC_HEADER);
+
+		final List<Map.Entry<String,String>> headers = new ArrayList<>();
+		for (Map.Entry<String, List<String>> headerEntry : response.getHeaders().entrySet()) {
+			for (String headerValue : headerEntry.getValue()) {
+				headers.add(new AbstractMap.SimpleImmutableEntry<>(headerEntry.getKey(), headerValue));
+			}
+		}
+
 		if (headers != null) {
 			final TraceeFilterConfiguration filterConfiguration = backend.getConfiguration(profile);
-
 			if (filterConfiguration.shouldProcessContext(IncomingResponse)) {
 				backend.putAll(filterConfiguration.filterDeniedParams(transportSerialization.parse(headers), IncomingResponse));
 			}

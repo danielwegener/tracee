@@ -2,7 +2,6 @@ package io.tracee.binding.servlet;
 
 import io.tracee.Tracee;
 import io.tracee.TraceeBackend;
-import io.tracee.TraceeConstants;
 import io.tracee.configuration.TraceeFilterConfiguration;
 import io.tracee.transport.HttpHeaderTransport;
 
@@ -25,8 +24,6 @@ import static io.tracee.configuration.TraceeFilterConfiguration.Channel.Outgoing
 public class TraceeFilter implements Filter {
 
 	public static final String PROFILE_INIT_PARAM = "profile";
-
-	private static final String HTTP_HEADER_NAME = TraceeConstants.TPIC_HEADER;
 
 	private String profile = TraceeFilterConfiguration.Profile.DEFAULT;
 
@@ -74,7 +71,9 @@ public class TraceeFilter implements Filter {
 	private void writeContextToResponse(final HttpServletResponse response, final TraceeFilterConfiguration configuration) {
 		if (!backend.isEmpty() && configuration.shouldProcessContext(OutgoingResponse)) {
 			final Map<String, String> filteredContext = backend.getConfiguration(profile).filterDeniedParams(backend.copyToMap(), OutgoingResponse);
-			response.setHeader(HTTP_HEADER_NAME, transportSerialization.render(filteredContext));
+			for (Map.Entry<String, String> header : transportSerialization.render(filteredContext)) {
+				response.addHeader(header.getKey(), header.getValue());
+			}
 		}
 	}
 
